@@ -1,0 +1,10 @@
+body {
+    min-width: 360px;
+    margin: 0;
+}
+
+*,
+::after,
+::before {    
+    box-sizing: border-box;
+}
