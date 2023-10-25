@@ -1,70 +1,55 @@
 <template>
     <div class="board">
         <div class="board__list">
-            <BoardItem v-for="field in fields" :field="field"  :key="`item-${field.id + 1}`" />
+            <BoardItem 
+                v-for="field in fields" 
+                :field="field" 
+                :status="gameStatus" 
+                :key="`item-${field.id + 1}`"
+                @select-field="selectField" 
+            />
         </div>
-
         <p class="level">Level: <strong>{{ level }}</strong></p>
-        <button class="btn" @click="start">Start</button>
+        <p v-if="isWin" class="win">Congratulations! Keep playing!</p>
+        <p v-if="isFail" class="fail">You've failed! Try again!</p>
+        <button class="btn" @click="start" :disabled="!canStartGame">Start</button>
     </div>
 </template>
 
 <script>
 import BoardItem from '@/components/BoardItem.vue';
-import {onBeforeMount, ref} from 'vue';
+import useGameInit from '@/hooks/useGameInit';
+import useGameStart from '@/hooks/useGameStart';
+import { GAME_STATUS } from '@/constants';
+import {ref} from 'vue';
+import useGameProcess from '@/hooks/useGameProcess';
 
 export default {
   components: {
     BoardItem
   },
+  methods: {
+  },
   setup() {
-    let level = ref(3);
-    let fields = ref([]);
     const number = 25;
+    const gameStatus = ref(GAME_STATUS.NONE);
 
-    const init = () => {
-        fields.value = [];
-
-        for (let i = 0; i < number; i++) {
-            fields.value.push({
-                id: i,
-                clicked: false,
-                value: 0,
-            })
-        }
-    }
-
-    onBeforeMount(init);
+    const {level, fields, init} = useGameInit(number);
+    const {start, canStartGame} = useGameStart(init, fields, number, level, gameStatus);
+    const {selectField, isWin, isFail} = useGameProcess(fields, gameStatus, level, start);
 
     return {
         level,
         fields,
         init,
-        number
+        start,
+        gameStatus,
+        canStartGame,
+        selectField,
+        isWin,
+        isFail
     }
   },
-  methods: {
-    start() {
-        this.init();
-        this.prepareGame();
-    },
-
-    prepareGame() {
-        for (let i = 0; i < this.level; i++) {
-            const index = this.rand(0, this.number - 1);
-
-            if (this.fields[index].value !== 1) {
-                this.fields[index].value = 1;
-            } else {
-                i--
-            }
-        }
-    },
-
-    rand(min,max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-  }
   
 }
 </script>
@@ -106,5 +91,23 @@ export default {
 
     .btn:hover {
         background-color: #42b983;
+    }
+
+    .btn:disabled {
+        opacity: 0.5;
+
+        cursor: default;
+    }
+
+    .btn:disabled:hover {
+        background-color: #42b983cc;
+    }
+
+    .win {
+        color: #42b983;
+    }
+
+    .fail {
+        color: #ff000066;
     }
 </style>
